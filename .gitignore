@@ -1,0 +1,10 @@
+.~lock.README.md#
+*.html
+*.css
+*.js
+*.wasm
+main
+out
+Makefile
+test*
+.vscode
