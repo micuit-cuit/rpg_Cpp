@@ -1,4 +1,6 @@
 #include "UTF8.h"
+
+// Définitions de macros
 #define nya std::
 
 UTF8::UTF8(nya string getData) {

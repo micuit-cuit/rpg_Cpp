@@ -1,47 +1,58 @@
 #pragma once
+
+// Includes standard C++
 #include <string>
 #include <vector>
+
+// Forward declarations
+class Map;
+
+// Includes locaux
 #include "../Entity.h"
+#include "../Player/Player.h"
 #include "../lootTable.h"
 #include "../../Item/Item.h"
+
+// Définitions de macros
 #define nya std::
 
 // Forward declarations
 class Map;
 
-class Monstre : public Entity {
+class Monster : public Entity {
     public:
-        Monstre(Map* currentMap, const int id, int life, int mana, const nya string& name);
-        virtual ~Monstre();
+        Monster(Map* currentMap, const int id, int life, int mana, const nya string& name);
+        virtual ~Monster();
         nya string getName() const;
-        //fonction d'ataque
+        // Attack function
+        void update(Map gameMap, Player& player);
         void attack(Entity& target, int method);
-        //getters
+        // Getters
         int getForce() const;
         int getExperience() const;
         int getLevel() const;
         bool isSelected() const;
         Item *getItem(int index) const;
-        //setters
+        // Setters
         void setSelected(bool state, nya string colorCode = "┎");
         void setExperience(int amount);
         void setForce(int amount);
         void setHandItem(Item* item);
         void setLife(int amount);
-        //iftters
+        // Checkers
         bool hasRenderMethod() const { return true; }
-        //placeholder
+        // Placeholder
         RenderElements render() const;
 
     private:
-        nya string monstreHead = "🕷";
+        nya string monsterHead = "🕷";
         bool selected = false;
         nya string name;
         int experience;
-        int force;
+        int force = 2;
         nya string selectColorCode = "┎";
-        Item *handItem;
+        int speed = 3;
+        int attackReadyTime = 0;
+        Item* handItem;
         nya vector<lootTable> lootTables;
 };
-
-        

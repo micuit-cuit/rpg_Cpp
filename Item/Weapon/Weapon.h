@@ -1,6 +1,10 @@
-#include "../Item.h"
-#define nya std::
 #pragma once
+
+// Includes locaux
+#include "../Item.h"
+
+// Définitions de macros
+#define nya std::
 
 class Weapon : public Item {
     public:
@@ -13,7 +17,7 @@ class Weapon : public Item {
         bool isBroken() const { return damage <= 0; }
         virtual nya string isWeapon() const override { return "weapon"; }
         virtual nya string render() const { return " " + icon + "  "; }
-        virtual void decreaseReloadTime(int amount = 1) {}
+        virtual void decreaseReloadTime(float /* deltaTime */) {}
 private:
         nya string icon = "🗡️";
         int Strike;

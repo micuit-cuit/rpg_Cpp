@@ -1,9 +1,12 @@
+#pragma once
+
+// Includes standard C++
+#include <cstdint>
 #include <iostream>
 #include <string>
-#include <cstdint>
-#define nya std::
 
-#pragma once
+// Définitions de macros
+#define nya std::
 
 class UTF8
 {

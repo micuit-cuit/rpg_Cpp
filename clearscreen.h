@@ -1,5 +1,6 @@
 #pragma once
 
+// Includes standard C++
 #include <iostream>
 
 void ClearScreen() {

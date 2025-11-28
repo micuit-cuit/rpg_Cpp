@@ -1,11 +1,14 @@
 // term_getchar.hpp — header-only simple getch / kbhit for POSIX
 #pragma once
-#include <termios.h>
-#include <unistd.h>
+
+// Includes standard C++
+#include <chrono>
 #include <fcntl.h>
 #include <sys/select.h>
-#include <chrono>
+#include <termios.h>
+#include <unistd.h>
 
+// Includes conditionnels
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/html5.h>

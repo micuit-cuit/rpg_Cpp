@@ -1,14 +1,19 @@
 #pragma once
+
+// Includes standard C++
+#include <algorithm>
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <algorithm>
-#define nya std::
 
+// Includes locaux
 #include "../Entity/Entity.h"
-#include "../Entity/Monstre/Monstre.h"
+#include "../Entity/Monster/Monster.h"
 #include "../UTF8.h"
+#include "../utilities.h"
 
+// Définitions de macros
+#define nya std::
 struct Layer {
     nya vector<UTF8> tiles;
     nya vector<UTF8> lights;
@@ -28,9 +33,15 @@ class Map {
         Vector2 getSize() const;
         nya string render();
         nya vector<Entity*> getEntities() const;
-        nya vector<Monstre*> getMonstres() const;
+        nya vector<Monster*> getMonsters() const;
+        // Collision boxes management
+        void addCollisionBox(const Box& box);
+        void setCollisionBoxes(const nya vector<Box>& boxes);
+        nya vector<Box> getCollisionBoxes() const;
+        bool checkCollision(const Vector2& position) const;
     private:
         nya vector<Entity*> entities;
         nya vector<Layer> layers;
+        nya vector<Box> collisionBoxes;
         Vector2 size;
 };

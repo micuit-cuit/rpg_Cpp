@@ -1,8 +1,12 @@
 #pragma once
 // Attack methods
 #define ATTACK_MELEE 1
+#define RANGE_MELEE 10
 #define ATTACK_RANGED 2
+#define RANGE_RANGED 40
 #define ATTACK_MAGIC 3
+#define RANGE_MAGIC 60
+
 
 // Weapon usage for MELEE
 #define MELEE_DAMAGE_SWORD 1
@@ -17,3 +21,5 @@
 #define RANGED_STRIKE_BOW 1 // basic strike for bow in ranged
 // Weapon usage for MAGIC
 #define MAGIC_DAMAGE_STAFF 1
+// Attack ranges
+#define ATTACK_RANGE_SWORD 10

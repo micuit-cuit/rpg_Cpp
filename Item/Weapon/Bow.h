@@ -1,5 +1,11 @@
 #pragma once
+
+// Includes locaux
 #include "./Weapon.h"
+#include "../../utilities.h"
+
+// Définitions de macros
+#define nya std::
 
 class Bow : public Weapon {
     public:
@@ -8,9 +14,14 @@ class Bow : public Weapon {
         virtual ~Bow() {}
         nya string isWeapon() const override { return "bow"; }
         virtual nya string render() const { return "\033[38;5;97m" + lightCalculateProgressBar(reloadTime, maxReloadTime) + "\e[0m" + icon + " "; }
-        void decreaseReloadTime(int amount = 1) override { reloadTime -= amount; if (reloadTime < 0) reloadTime = 0; }
+        float getReloadTime() const { return reloadTime; }
+        float getMaxReloadTime() const { return maxReloadTime; }
+        bool isReloaded() const { return reloadTime <= 0; }
+        void setReloadTime(float time) { reloadTime = time; }
+        void setMaxReloadTime(float time) { maxReloadTime = time; }
+        void decreaseReloadTime(float deltaTime) override { reloadTime -= deltaTime; if (reloadTime < 0) reloadTime = 0; }
 private:
     nya string icon = "🏹";
-    int reloadTime = 200;
-    int maxReloadTime = 200;
+    float reloadTime =0.2f;
+    float maxReloadTime =0.2f;
 };

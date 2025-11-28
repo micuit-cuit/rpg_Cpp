@@ -8,3 +8,8 @@ out
 Makefile
 test*
 .vscode
+DELTA_TIME_CONVERSION.md
+.gitignore
+rpg_game
+*.o
+REFACTORING_SUMMARY.md

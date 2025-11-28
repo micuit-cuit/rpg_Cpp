@@ -1,5 +1,11 @@
 #pragma once
+
+// Includes locaux
 #include "./Weapon.h"
+#include "../../utilities.h"
+
+// Définitions de macros
+#define nya std::
 
 class Staff : public Weapon {
     public:
@@ -7,14 +13,15 @@ class Staff : public Weapon {
             : Weapon(id, name, Strike, damage, mana, lore, icon) {this->icon = icon;}
     virtual ~Staff() {}
     nya string isWeapon() const override { return "staff"; }
-    virtual nya string render() const { return "\033[38;5;97m" + lightCalculateProgressBar(reloadTime, maxReloadTime) + "\e[0m" + icon + "  "; }
-    int getReloadTime() const { return reloadTime; }
-    int getMaxReloadTime() const { return maxReloadTime; }
-    void setReloadTime(int time) { reloadTime = time; }
-    void setMaxReloadTime(int time) { maxReloadTime = time; }
-    void decreaseReloadTime(int amount=1) override { reloadTime -= amount; if (reloadTime < 0) reloadTime = 0; }
+    virtual nya string render() const { return "\033[38;5;97m" + lightCalculateProgressBar(reloadTime, maxReloadTime) + "\e[0m" + icon + " "; }
+    float getReloadTime() const { return reloadTime; }
+    float getMaxReloadTime() const { return maxReloadTime; }
+    bool isReloaded() const { return reloadTime <= 0; }
+    void setReloadTime(float time) { reloadTime = time; }
+    void setMaxReloadTime(float time) { maxReloadTime = time; }
+    void decreaseReloadTime(float deltaTime) override { reloadTime -= deltaTime; if (reloadTime < 0) reloadTime = 0; }
 private:
     nya string icon = "🪄";
-    int reloadTime = 100;
-    int maxReloadTime = 100;
+    float reloadTime = 0.3f;
+    float maxReloadTime = 0.3f;
 };

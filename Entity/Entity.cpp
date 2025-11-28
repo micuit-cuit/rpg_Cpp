@@ -1,4 +1,6 @@
 #include "Entity.h"
+
+// Définitions de macros
 #define nya std::
 
 Entity::Entity(Map* currentMap, const int id, int life, int mana)
@@ -16,7 +18,7 @@ Entity::Entity(Map* currentMap, const int id, int life, int mana)
 
 Entity::~Entity() {}
 
-//getters
+// Getters
 int Entity::getLife() const { 
     return life; 
 }
@@ -37,9 +39,9 @@ int Entity::getZIndex() const {
     return zIndex; 
 }
 
-//iftters
+// Checkers
 bool Entity::isAlive() const { 
-    return life > 0; 
+    return life > 1; 
 }
 
 bool Entity::hasMana() const { 
@@ -51,9 +53,10 @@ bool Entity::isInZone(const Box& box) const {
         position.y >= box.pos1.y && position.y <= box.pos2.y);
 }
 
-//basic actions
-void Entity::takeDamage(int damage) { 
-    life -= damage; 
+// Basic actions
+void Entity::takeDamage(int damage) {
+    nya cerr << "Entity " << id << " takes " << damage << " damage." << nya endl;
+    life -= damage;
     if (life < 0) life = 0; 
 }
 
@@ -69,4 +72,11 @@ void Entity::setPosition(const Vector2& newPosition, Map &gameMap) {
 
 void Entity::setZIndex(int newZIndex) { 
     zIndex = newZIndex; 
+}
+
+void Entity::setLife(int amount) { 
+    if (amount >= 0) 
+        life = amount; 
+    else 
+        life = 10; 
 }

@@ -1,10 +1,14 @@
 #include "Player.h"
-#include "../../attackConst.h"
+
+// Includes locaux
 #include "../../Item/Weapon/Weapon.h"
 #include "../../UTF8.h"
-#include "../../utilitise.h"
+#include "../../attackConst.h"
+#include "../../utilities.h"
 
+// Définitions de macros
 #define nya std::
+
 
 Player::Player(Map* currentMap, const int id, int life, int mana, const nya string& name)
     : Entity(currentMap, id, life, mana), name(name), experience(0), force(10), handItemIndex(-1) {
@@ -18,22 +22,22 @@ nya string Player::getName() const {
 }
 
 void Player::attack(Entity& target, int method, int itemIndex) {
-    int Strike = 0;
+    int strike = 0;
     
     auto processWeapon = [&](Weapon* weapon, float multiplier, int damage) {
         if (weapon && !weapon->isBroken()) {
-            Strike += static_cast<int>(weapon->getStrike() * multiplier);
+            strike += static_cast<int>(weapon->getStrike() * multiplier);
             weapon->use(damage);
         }
     };
     
     if (method == ATTACK_MELEE) {
-        Strike += force;
-        // On vérifie si on a une arme à la main
+        strike += force;
+        // Check if we have a weapon in hand
         if (handItemIndex >= 0 && handItemIndex < static_cast<int>(inventory.size())) {
             Weapon* weapon = dynamic_cast<Weapon*>(inventory[handItemIndex]);
             if (weapon) {
-                // On choisit le multiplicateur et les dégâts selon le type
+                // Choose multiplier and damage according to type
                 if (weapon->isWeapon() == "sword")      
                     processWeapon(weapon, MELEE_STRIKE_SWORD, MELEE_DAMAGE_SWORD);
                 else if (weapon->isWeapon() == "bow")   
@@ -43,7 +47,7 @@ void Player::attack(Entity& target, int method, int itemIndex) {
             }
         }
     } else if (method == ATTACK_RANGED) {
-        Strike += force / RANGED_DAMAGE_BASE; // Ranged attacks are less influenced by force
+        strike += force / RANGED_DAMAGE_BASE; // Ranged attacks are less influenced by force
         if (itemIndex >= 0 && itemIndex < static_cast<int>(inventory.size())) {
             Weapon* weapon = dynamic_cast<Weapon*>(inventory[itemIndex]);
             if (weapon && weapon->isWeapon() == "bow") {
@@ -58,14 +62,20 @@ void Player::attack(Entity& target, int method, int itemIndex) {
             }
         }
     }
-    target.takeDamage(Strike);
+    target.takeDamage(strike);
 }
 
 int Player::getForce() const { 
     return force; 
 }
-
-int Player::getExperience() const { 
+bool Player::isSelected() const {
+    return selected;
+}
+void Player::setSelected(bool state, nya string colorCode) {
+    selected = state;
+    selectColorCode = colorCode;
+}
+int Player::getExperience() const {
     return experience; 
 }
 
@@ -74,24 +84,39 @@ int Player::getLevel() const {
     return experience / 100 + 1;
 }
 
-Item Player::getItem(int index) const { 
+Item *Player::getItem(int index) const { 
     if (index >= 0 && index < static_cast<int>(inventory.size())) {
-        return *inventory[index]; 
+        return inventory[index]; 
     }
-    return Item(0, "empty"); // Return empty item if index is invalid
+    return nullptr; // Return nullptr if index is invalid
 }
 
-nya vector<Item> Player::getInventory() const { 
-    nya vector<Item> result;
+nya vector<Item*> Player::getInventory() const { 
+    nya vector<Item*> result;
     for (const auto& item : inventory) {
         if (item) {
-            result.push_back(*item);
+            result.push_back(item);
         }
     }
     return result;
 }
-
-void Player::gainExperience(int amount) { 
+void Player::update() {
+    // fais augmenter le mana au max
+    if (mana < 100) mana++;
+    if (life < 100) life++;
+    // Placeholder for any player-specific updates
+    if (animStep >= 0) animStep--;
+    if (animStep == 0) selected = false;
+}
+void Player::takeDamage(int damage) {
+    nya cerr << "Player " << name << " takes " << damage << " damage." << nya endl; 
+    life -= damage;
+    if (life < 0) life = 0;
+    animStep = 6;
+    selected = true;
+    selectColorCode = "╘";
+}
+void Player::gainExperience(int amount) {
     experience += amount; 
 }
 
@@ -102,6 +127,7 @@ void Player::increaseForce(int amount) {
 void Player::addItem(Item* item) { 
     inventory.push_back(item); 
 }
+
 void Player::setHandItemIndex(int index) {
     if (index < 0)
         handItemIndex = 14;
@@ -122,24 +148,26 @@ RenderElements Player::render() const {
         const Weapon* weapon = dynamic_cast<const Weapon*>(inventory[handItemIndex]);
         if (weapon) {
             if (weapon->isWeapon() == "sword") {
-                elements.content.push_back(UTF8(" ° "));
+                elements.content.push_back(UTF8(" °  "));
                 elements.content.push_back(UTF8("/|\\𐃉"));
-                elements.content.push_back(UTF8("/ \\"));
+                elements.content.push_back(UTF8("/ \\ "));
                 elements.lights.push_back(UTF8(" ┏  "));
                 elements.lights.push_back(UTF8("┏┏┏┉"));
                 elements.lights.push_back(UTF8("┏ ┏ "));
                 elements.localPosition = { 2, 2 }; // Set the local position for a foot of the player
-                return elements;
+                    return selected ? RenderElementsSelected(elements, selectColorCode, life, maxLife, false) : elements;
+
             } else if (weapon->isWeapon() == "bow") {
-                elements.content.push_back(UTF8(" ° "));
+                elements.content.push_back(UTF8(" °   "));
                 elements.content.push_back(UTF8("/|\\|}"));
-                elements.content.push_back(UTF8("/ \\"));
-                elements.lights.push_back(UTF8(" ┏  "));
+                elements.content.push_back(UTF8("/ \\  "));
+                elements.lights.push_back(UTF8(" ┏   "));
                 elements.lights.push_back(UTF8("┏┏┏┏┏"));
-                elements.lights.push_back(UTF8("┏ ┏ "));
+                elements.lights.push_back(UTF8("┏ ┏  "));
                 elements.size = { 5,3 };
                 elements.localPosition = {2, 2}; // Set the local position for a foot
-                return elements;
+                    return selected ? RenderElementsSelected(elements, selectColorCode, life, maxLife, false) : elements;
+
             } else if (weapon->isWeapon() == "staff") {
                 elements.content.push_back(UTF8(" ° ❖"));
                 elements.content.push_back(UTF8("/|\\|"));
@@ -148,19 +176,21 @@ RenderElements Player::render() const {
                 elements.lights.push_back(UTF8("┏┏┏┏"));
                 elements.lights.push_back(UTF8("┏ ┏┏"));
                 elements.localPosition = { 2, 2 }; // Set the local position for a foot
-                return elements;
+                    return selected ? RenderElementsSelected(elements, selectColorCode, life, maxLife, false) : elements;
+
             }
         }
     }
-    elements.content.push_back(UTF8(" °"));
+    elements.content.push_back(UTF8(" ° "));
     elements.content.push_back(UTF8("/|\\"));
     elements.content.push_back(UTF8("/ \\"));
-    elements.lights.push_back(UTF8(" ┏"));
+    elements.lights.push_back(UTF8(" ┏ "));
     elements.lights.push_back(UTF8("┏┏┏"));
     elements.lights.push_back(UTF8("┏ ┏"));
     elements.size = { 3,3 };
     elements.localPosition = {2, 2}; // Set the local position for a foot
-    return elements;
+        return selected ? RenderElementsSelected(elements, selectColorCode, life, maxLife, false) : elements;
+
 }
 nya string Player::renderInventory() const {
     nya string inventoryDisplay = " ";
@@ -215,7 +245,7 @@ nya string Player::renderInventory() const {
             inventoryDisplay += "┃";
 
     }
-    inventoryDisplay += "\033[38;5;9m  │" + calculeteCharProgressBar(life, 100, 6, 6) + "│\033[38;5;14m │" + calculeteCharProgressBar(mana, 100, 6, 6) + "│\033[38;5;10m │" + calculeteCharProgressBar(experience % 100, 100, 6, 6) + "│\033[38;5;91m │" + calculeteCharProgressBar(force, 100, 6, 6) + "│\033[0m\n ";
+    inventoryDisplay += "\033[38;5;9m  │" + calculateCharProgressBar(life, 100, 6, 6) + "│\033[38;5;14m │" + calculateCharProgressBar(mana, 100, 6, 6) + "│\033[38;5;10m │" + calculateCharProgressBar(experience, 100, 6, 6) + "│\033[38;5;91m │" + calculateCharProgressBar(force, 100, 6, 6) + "│\033[0m\n ";
     for (int i = 0; i < 15; ++i) {
         if (i == handItemIndex) {
             if (i == 0) {
@@ -240,89 +270,10 @@ nya string Player::renderInventory() const {
                 inventoryDisplay += "┴";
         }
     }
-    inventoryDisplay += "\033[38;5;9m  │" + calculeteCharProgressBar(life, 100, 6, 5) + "│\033[38;5;14m │" + calculeteCharProgressBar(mana, 100, 6, 5) + "│\033[38;5;10m │" + calculeteCharProgressBar(experience % 100, 100, 6, 5) + "│\033[38;5;91m │" + calculeteCharProgressBar(force, 100, 6, 5) + "│\033[0m\n";
-    inventoryDisplay += " ┌──────────────────────────────────────────────────────────────────────────┐\033[38;5;9m  │" + calculeteCharProgressBar(life, 100, 6, 4) + "│\033[38;5;14m │" + calculeteCharProgressBar(mana, 100, 6, 4) + "│\033[38;5;10m │" + calculeteCharProgressBar(experience % 100, 100, 6, 4) + "│\033[38;5;91m │" + calculeteCharProgressBar(force, 100, 6, 4) + "│\033[0m\n";
-    inventoryDisplay += " │ " + (inventory.size() > static_cast<size_t>(handItemIndex) && inventory[handItemIndex] != nullptr ? textFixedLength(inventory[handItemIndex]->getLore(), 72) : nya string(72, ' ')) + " │\033[38;5;9m  │" + calculeteCharProgressBar(life, 100, 6, 3) + "│\033[38;5;14m │" + calculeteCharProgressBar(mana, 100, 6, 3) + "│\033[38;5;10m │" + calculeteCharProgressBar(experience % 100, 100, 6, 3) + "│\033[38;5;91m │" + calculeteCharProgressBar(force, 100, 6, 3) + "│\033[0m\n";
-    inventoryDisplay += " │                                                                          │\033[38;5;9m  │" + calculeteCharProgressBar(life, 100, 6, 2) + "│\033[38;5;14m │" + calculeteCharProgressBar(mana, 100, 6, 2) + "│\033[38;5;10m │" + calculeteCharProgressBar(experience % 100, 100, 6, 2) + "│\033[38;5;91m │" + calculeteCharProgressBar(force, 100, 6, 2) + "│\033[0m\n";
-    inventoryDisplay += " └──────────────────────────────────────────────────────────────────────────┘\033[38;5;9m  │" + calculeteCharProgressBar(life, 100, 6, 1) + "│\033[38;5;14m │" + calculeteCharProgressBar(mana, 100, 6, 1) + "│\033[38;5;10m │" + calculeteCharProgressBar(experience % 100, 100, 6, 1) + "│\033[38;5;91m │" + calculeteCharProgressBar(force, 100, 6, 1) + "│\033[0m";
+    inventoryDisplay += "\033[38;5;9m  │" + calculateCharProgressBar(life, 100, 6, 5) + "│\033[38;5;14m │" + calculateCharProgressBar(mana, 100, 6, 5) + "│\033[38;5;10m │" + calculateCharProgressBar(experience, 100, 6, 5) + "│\033[38;5;91m │" + calculateCharProgressBar(force, 100, 6, 5) + "│\033[0m\n";
+    inventoryDisplay += " ┌──────────────────────────────────────────────────────────────────────────┐\033[38;5;9m  │" + calculateCharProgressBar(life, 100, 6, 4) + "│\033[38;5;14m │" + calculateCharProgressBar(mana, 100, 6, 4) + "│\033[38;5;10m │" + calculateCharProgressBar(experience, 100, 6, 4) + "│\033[38;5;91m │" + calculateCharProgressBar(force, 100, 6, 4) + "│\033[0m\n";
+    inventoryDisplay += " │ " + (inventory.size() > static_cast<size_t>(handItemIndex) && inventory[handItemIndex] != nullptr ? textFixedLength(inventory[handItemIndex]->getLore(), 72) : nya string(72, ' ')) + " │\033[38;5;9m  │" + calculateCharProgressBar(life, 100, 6, 3) + "│\033[38;5;14m │" + calculateCharProgressBar(mana, 100, 6, 3) + "│\033[38;5;10m │" + calculateCharProgressBar(experience, 100, 6, 3) + "│\033[38;5;91m │" + calculateCharProgressBar(force, 100, 6, 3) + "│\033[0m\n";
+    inventoryDisplay += " │                                                                          │\033[38;5;9m  │" + calculateCharProgressBar(life, 100, 6, 2) + "│\033[38;5;14m │" + calculateCharProgressBar(mana, 100, 6, 2) + "│\033[38;5;10m │" + calculateCharProgressBar(experience, 100, 6, 2) + "│\033[38;5;91m │" + calculateCharProgressBar(force, 100, 6, 2) + "│\033[0m\n";
+    inventoryDisplay += " └──────────────────────────────────────────────────────────────────────────┘\033[38;5;9m  │" + calculateCharProgressBar(life, 100, 6, 1) + "│\033[38;5;14m │" + calculateCharProgressBar(mana, 100, 6, 1) + "│\033[38;5;10m │" + calculateCharProgressBar(experience, 100, 6, 1) + "│\033[38;5;91m │" + calculateCharProgressBar(force, 100, 6, 1) + "│\033[0m";
     return inventoryDisplay;
 }
-
-//     // a rendre dinamique en fonction de l'inventaire
-//     return " ┌────┬────┳━━━━┳────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┐  100⦁ 80⦁ 0 ⦁ 10\n\
-//  │ 🪵  │ 🗡️  ┃ 🗡️  ┃ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │  │█│⦁│ │⦁│ │⦁│ │\n\
-//  └────┴────┻━━━━┻────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘  │█│⦁│▓│⦁│ │⦁│ │\n\
-//  ┌──────────────────────────────────────────────────────────────────────────┐  │█│⦁│█│⦁│ │⦁│ │\n\
-//  │ box                                                                      │  │█│⦁│█│⦁│ │⦁│ │\n\
-//  │                                                                          │  │█│⦁│█│⦁│ │⦁│ │\n\
-//  └──────────────────────────────────────────────────────────────────────────┘  │█│⦁│█│⦁│ │⦁│▒│";
-// }
-
-/*
-█ ▓ ▒ ░
-| Caractère | Nom Unicode                       | Usage spécial / mixte           |
-| --------- | --------------------------------- | ------------------------------- |
-| ╞         | LEFT SINGLE AND RIGHT DOUBLE      | Jonction gauche mixte           |
-| ╡         | RIGHT SINGLE AND LEFT DOUBLE      | Jonction droite mixte           |
-| ╤         | DOWN SINGLE AND HORIZONTAL DOUBLE | Jonction haut mixte             |
-| ╧         | UP SINGLE AND HORIZONTAL DOUBLE   | Jonction bas mixte              |
-| ╦         | DOWN DOUBLE AND HORIZONTAL SINGLE | Jonction haut mixte (inverse)   |
-| ╩         | UP DOUBLE AND HORIZONTAL SINGLE   | Jonction bas mixte (inverse)    |
-| ╠         | VERTICAL DOUBLE AND RIGHT SINGLE  | Jonction gauche mixte (inverse) |
-| ╣         | VERTICAL DOUBLE AND LEFT SINGLE   | Jonction droite mixte (inverse) |
-| Caractère | Nom Unicode                   | Usage principal          |
-| --------- | ----------------------------- | ------------------------ |
-| ─         | LIGHT HORIZONTAL              | Ligne horizontale simple |
-|  │         | LIGHT VERTICAL                | Ligne verticale simple   |
-| ┌         | LIGHT DOWN AND RIGHT          | Coin haut gauche simple  |
-| ┐         | LIGHT DOWN AND LEFT           | Coin haut droit simple   |
-| └         | LIGHT UP AND RIGHT            | Coin bas gauche simple   |
-| ┘         | LIGHT UP AND LEFT             | Coin bas droit simple    |
-| ├         | LIGHT VERTICAL AND RIGHT      | Jonction gauche simple   |
-| ┤         | LIGHT VERTICAL AND LEFT       | Jonction droite simple   |
-| ┬         | LIGHT DOWN AND HORIZONTAL     | Jonction haut simple     |
-| ┴         | LIGHT UP AND HORIZONTAL       | Jonction bas simple      |
-| ┼         | LIGHT VERTICAL AND HORIZONTAL | Croisement simple        |
-| Caractère | Nom Unicode                    | Usage principal          |
-| --------- | ------------------------------ | ------------------------ |
-| ═         | DOUBLE HORIZONTAL              | Ligne horizontale double |
-| ║         | DOUBLE VERTICAL                | Ligne verticale double   |
-| ╔         | DOUBLE DOWN AND RIGHT          | Coin haut gauche double  |
-| ╗         | DOUBLE DOWN AND LEFT           | Coin haut droit double   |
-| ╚         | DOUBLE UP AND RIGHT            | Coin bas gauche double   |
-| ╝         | DOUBLE UP AND LEFT             | Coin bas droit double    |
-| ╠         | DOUBLE VERTICAL AND RIGHT      | Jonction gauche double   |
-| ╣         | DOUBLE VERTICAL AND LEFT       | Jonction droite double   |
-| ╦         | DOUBLE DOWN AND HORIZONTAL     | Jonction haut double     |
-| ╩         | DOUBLE UP AND HORIZONTAL       | Jonction bas double      |
-| ╬         | DOUBLE VERTICAL AND HORIZONTAL | Croisement double        |
-| Représentation visuelle       | Usage principal          |emoji associé         |
-| --------- | ----------------------------- | ------------------------ |
-| Dagger                        | Arme de mêlée légère| 🗡                     |
-| buche d'arbre                 | Ressource de bois         | 🪵|
-| Coffre                        | Conteneur                 | 📦                     |
-| Épée                          | Arme de mêlée lourde      | 🗡                     |
-| Arc                           | Arme à distance           | 🏹                     |
-
-━ ┃ ┏ ┓ ┗ ┛ ┣ ┫ ┳ ┻ ╋
-
-┌───────┐
-│ box   │
-└───────┘
-╔═════════╗
-║ nyabox  ║
-╚═════════╝
-
-┏━━━━┳────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┐
-┃ 🪵  ┃ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │
-┗━━━━┻────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘
-┌────┬────┳━━━━┳────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┐
-│ 🪵  │ 🗡️  ┃ 🗡️  ┃ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │ 🗡️  │
-└────┴────┻━━━━┻────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘
-┌───────────────────────────────────────────────────────────────────────────────┐
-│ box                                                                           │
-│                                                                               │
-│                                                                               │
-│                                                                               │
-└───────────────────────────────────────────────────────────────────────────────┘
-*/

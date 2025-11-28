@@ -1,5 +1,9 @@
 #pragma once
+
+// Includes locaux
 #include "./Weapon.h"
+
+// Définitions de macros
 #define nya std::
 
 class Sword : public Weapon {

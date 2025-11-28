@@ -1,6 +1,12 @@
 #pragma once
+
+// Includes standard C++
 #include <vector>
+
+// Includes locaux
 #include "../Item/Item.h"
+
+// Définitions de macros
 #define nya std::
 
 struct lootTableIndex {
